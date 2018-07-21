@@ -1,0 +1,327 @@
+Classes, objectos, atributos, métodos
+
+Classes, objetos, atributos, métodos.
+
+Estes são conceitos fundamentais em programação, apresentados nestes apontamentos através de um exemplo melhorado progressivamente.
+
+João Manuel Rodrigues jmr@ua.pt 2012--2015
+
+Introdução
+
+Em Programação 1 usámos classes com duas finalidades:
+
+Classes que são coleções de funções. Este é o tipo de classe que usamos para conter um programa:
+
+public class Prog {
+  public static void main(String[] args) {
+    ...
+  }
+}
+Classes que definem novos tipos de dados compostos de vários campos ("registos").
+
+class Aluno {
+  String nome;
+  int nota;
+}
+Na verdade uma classe em Java pode ser um misto destas situações: pode conter funções (métodos) e campos (atributos). Tanto os métodos como os atributos podem ser static ou não. Também podem ser declarados public ou private, ou possuir ainda outras características. A partir de um exemplo, exploraremos progressivamente estes conceitos, procurando justificar a sua utilidade.
+
+Classes e objetos
+
+Considere uma classe que define um tipo adequado para registar as notas teórica e prática de um aluno:
+
+    class Notas {
+      int nmec;  // número mecanográfico
+      int nt;    // nota teórica
+      int np;    // nota prática
+    }
+A classe funciona como um molde a partir do qual podemos criar um ou mais objetos.
+
+    Notas x, y;        // declaração de variáveis do tipo Notas
+    x = new Notas();   // criação de um objeto do tipo Notas
+    y = new Notas();   // criação de outro objeto do tipo Notas
+O operador new reserva memória para um novo objeto com três campos inteiros e devolve uma referência para esse objeto. As variáveis x e y (como quaisquer variáveis de tipo não primitivo) guardam referências, não guardam o objeto diretamente. Veremos que isso tem consequências importantes, que podem parecer estranhas. Repare que, neste momento,
+
+    x.nmec == 0 && x.nt == 0 && x.np == 0;
+e também
+
+    y.nmec == 0 && y.nt == 0 && y.np == 0;
+no entanto,
+
+    x != y;
+Porquê?
+
+Porque x e y têm referências diferentes, ou seja, "apontam" para objetos distintos, ainda que esses objetos tenham o mesmo conteúdo.
+
+Terminologia
+
+Ao processo de criar um objeto de uma classe chama-se instanciação. Diz-se também que um objeto é uma instância de uma classe.
+
+Os termos referência e ponteiro (pointer) são usados frequentemente como sinónimos na documentação e literatura sobre Java. (Já deve ter visto a mensagem de erro "NullPointerException"...)
+
+Atributos e métodos
+
+Aos campos de uma classe (como nmec, nt, np) também se chamam atributos. Os atributos são os membros da classe que permitem armazenar informação.
+
+Suponha que pretendemos saber a nota final de um aluno, obtida pela média das notas nt e np. Naturalmente, podemos fazer o cálculo no programa principal, com uma função até, se quisermos. Mas a nota final é algo que deveria ficar intimamente associado ao registo de notas do aluno... Nesse caso, poderíamos acrescentar um campo ao registo
+
+   class Notas {
+      int nmec;  // número mecanográfico
+      int nt;    // nota teórica
+      int np;    // nota prática
+      double nf; // nota final
+    }
+e atribuir-lhe o valor adequado quando forem conhecidas as notas parciais
+
+    x.nmec = 54321; x.nt = 15; x.np = 13;
+    x.nf = (x.nt + x.np) / 2.0;   // fica 14.0
+Porém, sempre que mudarmos uma nota parcial, e.g.
+
+    x.np = 14;
+a nota final fica desatualizada. Se nos esquecermos de a atualizar, o objeto fica com informação incoerente.
+
+Podemos evitar isso se substituirmos o atibuto nf por uma função nf() que calcula a nota final apenas quando é necessária.
+
+   class Notas {
+      int nmec;  // número mecanográfico
+      int nt;    // nota teórica
+      int np;    // nota prática
+      double nf() {   // nota final
+        return (nt + np) / 2.0;
+      }
+    }
+Agora as nossas Notas ganharam um comportamento interessante:
+
+    println(x.nf());  // imprime 14.5, mas
+    x.nt = 16;        // modificando a nota teórica,
+    println(x.nf());  // imprime 15.0.
+Assim, o método nf() funciona como uma espécie de campo calculado automaticamente quando invocado. (Em linguagens como o Java, o termo método é essencialmente sinónimo de função.)
+
+A nossa classe deixou de ser um mero registo passivo de informação para se tornar numa entidade ativa, capaz de executar operações! A classe, além de atributos, tem agora métodos.
+
+E não estamos limitados a métodos que calculam fórmulas. Também podemos ter métodos que modificam o objeto. Por exemplo, um método para especificar simultaneamente as duas notas de um aluno:
+
+    class Notas {
+      int nmec;  // número mecanográfico
+      int nt;    // nota teórica
+      int np;    // nota prática
+      double nf() {   // nota final
+        return (nt + np) / 2.0;
+      }
+      void set(int notat, int notap) {
+        nt = notat;  np = notap;
+      }
+    }
+Agora, em vez de fazermos
+
+    y.nt = 8;  y.np = 9;
+podemos chamar
+
+    y.set(8, 9);
+para modificar os dois atributos do objeto y.
+
+Não parece muito vantajoso, mas torna-se mais interessante se definirmos o método assim:
+
+      void set(int t, int p) {
+        if (0 <= t && t <= 20 && 0 <= p && p <= 20) {
+          nt = t;  np = p;
+        } else {
+          System.err.println("Erro: notas inválidas!");
+          System.exit(1);
+        }
+      }
+Agora o método avisa-nos imediatamente se lhe passarmos notas inválidas. Isto impede que o objeto fique com um estado inválido. É algo que não podemos garantir se atribuirmos o valor diretamente ao atributo.
+
+Uma forma melhor e mais simples de escrever este método seria usando uma instrução assert, como veremos noutra lição:
+
+      void set(int t, int p) {
+        assert 0 <= t && t <= 20 && 0 <= p && p <= 20 : "Notas devem ser entre 0 e 20";
+        nt = t;  np = p;
+      }
+Contexto de execução de um método
+
+Repare que x.nf() e y.nf() são diferentes apesar de estarmos a invocar o mesmo método. O método é o mesmo, mas está aplicado a objetos distintos, por isso é executado em contextos distintos, podendo produzir resultados diferentes. O contexto de execução de um método pode ser definido como o conjunto de variáveis e atributos que o método consegue aceder (e modificar).
+
+Ao executar x.nf(), a instrução
+
+        return (nt + np) / 2.0;
+é executada no contexto do objeto referenciado por x e, portanto, vai aceder aos valores dos atributos nt e np desse objeto.
+
+O parâmetro implícito this
+
+Podemos considerar que numa invocação x.nf(), o objeto x é passado ao método como um parâmetro implícito. E dentro do método qualquer referência a um certo atributo refere-se implicitamente a esse atributo no objeto recebido nesse parâmetro. O parâmetro implícito num método até tem um identificador, que é uma palavra reservada em Java: this. Por isso, o método nf() poderia também ter sido escrito assim:
+
+      double nf() {   // nota final
+        return (this.nt + this.np) / 2.0;
+      }
+Este é um exemplo académico, que não traz vantagens em relação à primeira versão. Já sabíamos que os atributos nt e np eram os de este objeto específico, ao qual o método foi aplicado.
+
+Porém, há situações em que é útil e necessário usar this explicitamente. Uma é quando a função tem parâmetros ou outras variáveis locais com nomes iguais aos dos atibutos. Nesse caso, para nos referirmos aos atributos, teremos que o indicar explicitamente com this.atributo.
+
+Atributos de objeto e de classe (static)
+
+Os atributos que temos até agora dizem-se atributos de objeto (ou de instância) porque cada objeto criado tem um conjunto distinto destes atributos, que podem receber valores diferentes em cada objeto.
+
+    x.nmec = 54321; x.nt = 15; x.np = 13;
+    y.nmec = 65432; y.nt = 12; x.np = 11;
+Mas também existem atributos de classe: atributos que pertencem à classe e são partilhados por todos os objetos dessa classe. Vamos mostrar a sua utilidade.
+
+Admita que pretendemos generalizar a classe Notas para permitir médias ponderadas das componentes teórica e prática. Os pesos deverão ser ajustáveis. Para isso declaramos dois novos atributos, acrescentamos um método para os ajustar e modificamos o método nf:
+
+      double pt = 0.5;  // peso da nota teórica
+      double pp = 0.5;  // peso da nota prática
+
+      void ajustaPesos(double pesoTeorica) {
+        assert 0 <= pesoTeorica && pesoTeorica <= 1 : "Peso tem de pertencer a [0; 1]";
+        pt = pesoTeórica;
+        pp = 1.0 - pt;
+      }
+
+      double nf() {   // nota final
+        return (pt * nt + pp * np);
+      }
+Assim, podemos experimentar:
+
+  Notas x = new Notas();
+  Notas y = new Notas();
+  x.set(10, 12);        // x.nf() será 11.0
+  y.set(10, 12);        // y.nf() será 11.0
+  x.ajustaPesos(0.90);  // agora x.nf() será 10.2, mas y.nf() continua 11.0
+Mas não era isto que pretendíamos! Os objetos x e y têm as mesmas notas, deveriam ter a mesma nota final. O que pretendíamos era que a alteração dos pesos se refletisse instantaneamente em todos os objetos. Para isso é preciso que os atributos pt e pp sejam partihados por todos os objetos, ou seja, deverão ser atributos de classe (atributos static):
+
+      static double pt = 0.5;  // peso da nota teórica
+      static double pp = 0.5;  // peso da nota prática
+Com esta nova versão, temos
+
+  Notas x = new Notas();
+  Notas y = new Notas();
+  x.set(10, 12);        // x.nf() será 11.0
+  y.set(12, 10);        // y.nf() será 11.0
+  x.ajustaPesos(0.90);  // agora x.nf() será 10.2, e y.nf() será 11.8
+Ou seja: a modificação dos pesos afetou todos os objetos, como pretendíamos.
+
+Os atributos estáticos constituem um novo contexto, o contexto de classe, que pertence à classe, mas é acessível também em todas as suas instâncias.
+
+Métodos de classe (static)
+
+Embora possa parecer estranho, as invocações
+
+  x.ajustaPesos(0.90);
+  y.ajustaPesos(0.90);
+produzem precisamente o mesmo efeito. De facto, o método ajustaPesos só acede (e modifica) atributos de classe, por isso é irrelevante aplicá-lo a um ou outro objeto em particular. Por esta razão este método poderia (e deveria) ter sido declarado como método de classe (static):
+
+      static void ajustaPesos(double pesoTeorica) {
+        assert 0 <= pesoTeorica && pesoTeorica <= 1 : "Peso tem de pertencer a [0; 1]";
+        pt = pesoTeórica;
+        pp = 1 - pt;
+      }
+A palavra reservada static identifica que o método é aplicável à classe e executa no contexto da classe e não no contexto de qualquer dos seus objetos. Com esta declaração passa a ser possível invocar
+
+  Notas.ajustaPesos(0.90);
+o que torna claro que é um método aplicado à classe como um todo.
+
+É possível invocar um método de classe ainda antes da criação de qualquer objeto:
+
+  Notas.ajustaPesos(0.90);  // ainda não existe nenhum objeto e funciona
+  Notas x;                  // declaramos variável, mas ainda não foi criado nenhum objeto...
+  x.ajustaPesos(0.90);      // mesmo assim funciona!
+A última invocação funciona porque um método static é aplicado ao tipo declarado da variável e não ao objeto referenciado pela variável (que neste caso ainda nem está inicializada). Apesar de funcionar de todas estas formas, é geralmente preferível a primeira forma pois torna evidente a aplicação à classe e não a um objeto.
+
+As instruções de um método static são executadas num contexto de classe (contexto static), o que significa que têm acesso apenas aos atributos e métodos static da sua classe, e não a qualquer atributo ou método do objeto implícito. Aliás, num contexto static nem existe o objeto this. Se um método precisar de aceder a atributos do objeto (não static) ou invocar métodos do objeto, então não poderá ser um método static. Se tentarmos fazer isso, o compilador detectará e reportará um erro
+
+  "non-static variable XX / method XX() cannot be referenced from a static context."
+Exemplos de métodos e atributos de objeto e de classe
+
+Mesmo não sabendo, certamente já usou muitos métodos e atributos static e não static.
+
+  static void main(...);   // o método principal de um programa é um método static da classe!
+  Math.sin(0);             // funções matemáticas são métodos estáticos da classe Math
+  n = Integer.MAX_VALUE;   // muitas constantes são atributos estáticos
+  m = "aaa".length();      // método de objeto da classe String
+Encapsulamento (qualificadores private, public)
+
+Acima defendemos a utilização de métodos como set ou ajustaPesos como forma de fiscalizar as alterações dos atributos, para prevenir estados incoerentes, como objetos com notas negativas, ou pesos superiores a 1, por exemplo. No entanto, a existência de tais métodos não impede que o programador que utiliza a classe (um cliente da classe) possa fazer disparates como
+
+  x.nt = -3;
+  Notas.pt = 2.5;
+que colocam o sistema num estado incoerente, com consequências imprevisíveis.
+
+É possível evitar este risco recorrendo a um mecanismo de encapsulamento existente em linguagens como Java, que permite proteger atributos (e métodos) contra a sua utilização por clientes. Por outras palavras, é possível declarar que certos atributos (ou métodos) sejam apenas para utilização privada dentro da própria classe. Assim, podemos proteger a nossa classe, declarando os atributos private:
+
+    class Notas {
+      private int nmec;  // número mecanográfico
+      private int nt;    // nota teórica
+      private int np;    // nota prática
+      private static double pt = 0.5;  // peso da nota teórica
+      private static double pp = 0.5;  // peso da nota prática
+Agora um cliente já não tem acesso direto (nem pode modificar) qualquer dos atributos da classe Notas ou dos seus objetos. Mas é claro que pretendemos que qualquer cliente possa continuar a usar os métodos da classe (que já fazem verificações de coerência). Para isso devemos declarar os métodos como public:
+
+      public double nf() { ... }
+
+      public void set(int t, int p) { ... }
+
+      public static void ajustaPesos(double pesoTeorica) { ... }
+Em Java, a proteção dos atributos evita modificações desprotegidas, mas por outro lado também impede a mera consulta dos atributos. Por exemplo, tentar
+
+  int nota = x.nt;
+produz um erro de compilação ("nt has private access in Notas"). Se quisermos permitir o acesso ao valor do atributo, não precisamos de pôr em causa a sua proteção. Podemos simplesmente criar um método público
+
+      public int nt() { return nt; }
+que devolve o valor do atributo e passamos a usá-lo em vez do acesso direto
+
+  int nota = x.nt();
+Assim obtemos o acesso pretendido, mas continua a ser impossível modificarmos o atributo. (Tentar algo como x.nt() = 12; é claramente um erro sintático pois x.nt() é um valor e não uma variável.)
+
+As palavras reservadas private e public são exemplos de qualificadores de acesso. Existem dois outros qualificadores de acesso: protected, que funciona como private excepto em classes derivadas, um conceito a estudar noutra disciplina; e o qualificador por omissão, que não tem nenhuma palavra reservada e que corresponde a um tipo de acesso de pacote (package), que permite o acesso por classes do mesmo pacote, mas impede o acesso por outras classes.
+
+Construtores
+
+Neste momento, se quisermos inicializar um novo objeto com certas notas fazemos algo como:
+
+  Notas x = new Notas();  // cria o objeto
+  x.set(10, 12);          // atribui as notas
+mas é possível combinarmos estes dois passos num só.
+
+Para isso, a classe tem de definir um construtor:
+
+      public Notas(int t, int p) {
+        assert 0 <= t && t <= 20 && 0 <= p && p <= 20 : "Notas devem ser entre 0 e 20";
+        nt = t;  np = p;
+      }
+e agora já será possível fazer:
+
+  Notas x = new Notas(10, 12);
+para criar o objeto com as notas atribuidas.
+
+Um construtor é um método especial em vários aspetos:
+
+O seu nome tem de ser igual ao da classe.
+Não tem resultado, mas também não se declara como void.
+Nunca é static. Corre no contexto do objeto.
+É invocado apenas no momento da criação de um objeto, através do operador new. Não pode ser invocado de outra forma.
+Se a classe não definir nenhum construtor, existe sempre um construtor implícito, sem parâmetros, que não faz nada. (Foi o que usámos até agora.)
+O objetivo de um construtor é (deve ser) inicializar os atributos do objeto que acaba de ser criado de forma a deixá-lo num estado coerente e conveniente.
+
+Antes do construtor correr, os atributos são inicializados com os valores pré-definidos para o respetivo tipo (zero, false ou null) ou com os valores indicados na sua declaração, por exemplo,
+
+      private int nmec = 1;  // inicializa nmec, mesmo antes do construtor
+mas o construtor pode modificá-los, se quiser.
+
+O bloco de inicialização static
+
+O bloco de inicialização static é um bloco de código que é executado apenas quando a classe é carregada. Pode usar-se para inicializar os atributos static da classe, de modo análogo ao uso do construtor para inicializar os atributos de objeto.
+
+Tem uma sintaxe muito simples. Por exemplo, poderíamos ter usado
+
+      static {
+        pt = 0.3;
+        pp = 1.0 - pt;
+      }
+para inicializar os atributos static da classe Notas. Claro que só se justificaria em casos mais complexos.
+
+...
+
+Referências
+
+Pode encontrar mais informação na lição Classes and Objects dos tutoriais Java oficiais.
+
+Última alteração: Quinta, 25 Fevereiro 2016, 02:50
